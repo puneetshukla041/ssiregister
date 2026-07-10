@@ -21,10 +21,15 @@ export async function connectToDatabase() {
 
   if (!cached.promise) {
     cached.promise = (async () => {
-      const uris = [
-        process.env.MONGODB_URI || process.env.MONGO_URI,
-        process.env.MONGODB_FALLBACK_URI || 'mongodb://127.0.0.1:27017/ssiregister',
-      ].filter((value): value is string => Boolean(value));
+      const primaryUri = process.env.MONGODB_URI || process.env.MONGO_URI;
+      const fallbackUri = process.env.MONGODB_FALLBACK_URI;
+      const uris = [primaryUri, ...(fallbackUri ? [fallbackUri] : [])].filter(
+        (value): value is string => Boolean(value)
+      );
+
+      if (!primaryUri) {
+        throw new Error('No MongoDB URI found. Add MONGODB_URI or MONGO_URI to your .env.local file.');
+      }
 
       let lastError: unknown;
 
@@ -44,7 +49,7 @@ export async function connectToDatabase() {
       }
 
       throw new Error(
-        `Unable to connect to MongoDB. Last error: ${lastError instanceof Error ? lastError.message : String(lastError)}`
+        `Unable to connect to MongoDB. Last error: ${lastError instanceof Error ? lastError.message : String(lastError)}. If you are using Atlas, allow your current IP in Atlas Network Access or use a local MongoDB URI.`
       );
     })().catch((error) => {
       cached.promise = null;

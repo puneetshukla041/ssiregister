@@ -19,6 +19,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, data: records });
   } catch (error) {
     console.error('Admin fetch failed', error);
-    return NextResponse.json({ error: 'Unable to load registrations.' }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: 'Unable to load registrations.',
+        details: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 }
+    );
   }
 }
